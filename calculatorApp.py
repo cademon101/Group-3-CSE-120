@@ -1,4 +1,5 @@
 import math
+import re
 import numpy as np
 from matplotlib import pyplot as plt 
 from fractions import Fraction
@@ -112,6 +113,7 @@ class Calculator:
     def fraction_to_decimal(self, numerator, denominator):
         result = numerator / denominator
         print(f"The decimal representation of {numerator}/{denominator} is: {result}")
+        return float(result)
     
     def square_root(self, x):
         return math.sqrt(x)
@@ -119,6 +121,7 @@ class Calculator:
     def decimal_to_fraction(self, decimal):
         fraction = Fraction(decimal).limit_denominator()
         print(f"The fraction representation of {decimal} is: {fraction.numerator}/{fraction.denominator}")
+        return float(fraction.numerator/ fraction.denominator)
       
     def factorial(self, x):
         return math.factorial(x)
@@ -134,10 +137,8 @@ class Calculator:
 
     def print_menu(self):
             print("\nOptions:")
-            print("Enter 'add' for addition")
-            print("Enter 'subtract' for subtraction")
-            print("Enter 'multiply' for multiplication")
-            print("Enter 'divide' for division")
+            print("To add'+', subtract'-', multiply'*', divide'/': type your two numbers with an operator split by spaces EX: (38 / 2)")
+            print("To continue calculation with past result(non graphing function) use an operator followed by number EX:+ 4")
             print("Enter 'derivative' for derivative")
             print("Enter 'fib' for Fibonacci sequence")
             print("Enter 'graphFib' for Fibonacci sequence")
@@ -151,21 +152,29 @@ class Calculator:
             print("Enter 'fact' for factorial")
             print("Enter 'simplify' to simplify a fraction")
             print("Enter 'log' for logarithmic functions")
+            print("Enter 'complex' for complex basic arithmatic EX: (5+5)5c")
+            print("Enter 'c' to clear past result")
+            print("Enter 'cc' to clear whole terminal")
             print("Enter 'quit' to end the program")
     
-    def quick_calc(self, input_parts):
-        
+    def calculate_complex_expression(self, user_input):
+        #user_input = input("Please enter the expression to calculate: ")
+        user_input = user_input.replace('^', '**')  
+        user_input = re.sub(r'(\d)\s*\(', r'\1*(', user_input)
+        try:
+            result = eval(user_input)
+            return result
+        except Exception as e:
+            print(":", e)
+            return None
+
+    def quick_calc(self, input_parts, result):
+
+        #calculations with past result
         if (len(input_parts) == 2):
-            num1 = "PLACEHOLDER" #needs to be calc last calculated 
+            num1 = float(result)
             operator = input_parts[0]
             num2 = float(input_parts[1])
-                ## place last calculated
-                 
-        if (len(input_parts) == 3):
-            num1 = float(input_parts[0])
-            operator = input_parts[1]
-            num2 = float(input_parts[2])
-
             if operator == '+':
                 return Calculator().add(num1, num2)
             elif operator == '-':
@@ -177,13 +186,29 @@ class Calculator:
             else:
                 print("Invalid operator. Please use '+', '-', '*', or '/'.")
 
-            return
+        #basic calculations
+        if (len(input_parts) == 3):
+            num1 = float(input_parts[0])
+            operator = input_parts[1]
+            num2 = float(input_parts[2])
+            if operator == '+':
+                return Calculator().add(num1, num2)
+            elif operator == '-':
+                return Calculator().subtract(num1, num2)
+            elif operator == '*':
+                return Calculator().multiply(num1, num2)
+            elif operator == '/':
+                return Calculator().divide(num1, num2)
+            else:
+                print("Invalid operator. Please use '+', '-', '*', or '/'.")
                 ##place cal code here 
 
 def calculatorSimulator():
     
-    calculator.print_menu()
+    
     calculator = Calculator()
+    calculator.print_menu()
+    result = 0
     while True:
 
         user_input = input(": ")
@@ -192,15 +217,10 @@ def calculatorSimulator():
         if user_input == "quit":
             break
 
-        elif ( len(input_split) >= 2 ):
-            result = calculator.quick_calc(input_split)
-            print("Result: ", result)
-
         #Keeping this in for de-bugging :)
         elif user_input in ("add", "subtract", "multiply", "divide"):
             num1 = float(input("\nEnter first number: "))
             num2 = float(input("Enter second number: "))
-
             result = getattr(calculator, user_input)(num1, num2)
             print("Result: ", result)
         
@@ -217,7 +237,19 @@ def calculatorSimulator():
         elif user_input == "graphFib":
             n = int(input("\nEnter the number n. Drawing the fibonnaci sequence from range (1, n). n: "))
             calculator.graphFibonacci(n)
-            
+
+        elif user_input == "c":
+            result = 0
+
+        elif user_input == "cc":
+            result = 0
+            if os.name == 'nt':
+                _ = os.system('cls')
+                calculator.print_menu()
+            else:
+                _ = os.system('clear')
+                calculator.print_menu()
+        
         elif user_input in ("graph"):
             #Comment: love the code here, but lets make a method in our calculator class that genereates the x and y value lists, 
             #we can have the user inputs here but lets not have calculations here, we can put that in the class object
@@ -254,12 +286,12 @@ def calculatorSimulator():
           
         elif user_input == "d to f":
             decimal = float(input("Enter the decimal number: "))
-            calculator.decimal_to_fraction(decimal)
+            result = calculator.decimal_to_fraction(decimal)
         
         elif user_input == "f to d":
             numerator = int(input("Enter the numerator: "))
             denominator = int(input("Enter the denominator: "))
-            calculator.fraction_to_decimal(numerator, denominator)
+            result = calculator.fraction_to_decimal(numerator, denominator)
         
         elif user_input in ("square", "square root"):
             num = float(input("\nEnter number: "))
@@ -272,16 +304,28 @@ def calculatorSimulator():
         elif user_input in ("log"):
           num = float(input("\nEnter number: "))
           base = float(input("Enter base (for natural use 0):"))
-          print("Result: ", calculator.log(num, base))
-        
+          result = calculator.log(num, base)
+          print("Result: ", result)
+
+        elif (user_input in ("complex")):
+            num = input("\nEnter expression EX 4(4*5) : ")
+            result = calculator.calculate_complex_expression(num)
+            print("Result: ", result)
+
+
         elif user_input in ("simplify"):
             numerator = float(input("\nEnter numerator: "))
             denominator = float(input("Enter denominator: "))
-            print("Result: ", calculator.simplify_fraction(numerator, denominator))
+            result = calculator.simplify_fraction(numerator, denominator)
+            print("Result: ", result)
+        
+        #catch all for quick calculate
+        elif ( len(input_split) >= 2 ):
+            result = calculator.quick_calc(input_split, result)
+            print("Result: ", result)
 
-        else:
-            print("\nInvalid input")
-    
+
+
     
 def main():
     try:
